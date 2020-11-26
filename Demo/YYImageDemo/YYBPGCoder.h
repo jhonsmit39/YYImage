@@ -38,5 +38,3 @@ CG_EXTERN void YYCGImageDecodeAllFrameInBPGData(CFDataRef bpgData, BOOL decodeFo
  Whether data is bpg.
  */
 CG_EXTERN BOOL YYImageIsBPGData(CFDataRef data);
-
-

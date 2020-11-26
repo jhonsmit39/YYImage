@@ -9,13 +9,14 @@
 #import "ViewController.h"
 #import "YYImageExample.h"
 
-@interface ViewController ()
+@interface ViewController()
 
 @end
 
 @implementation ViewController
 
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
     [super viewDidLoad];
     YYImageExample *vc = [YYImageExample new];
     [self pushViewController:vc animated:NO];

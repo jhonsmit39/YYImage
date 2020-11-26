@@ -15,34 +15,41 @@
 #import <mach/mach.h>
 
 
-#define BUFFER_SIZE (10 * 1024 * 1024) // 10MB (minimum memory buffer size)
+#define BUFFER_SIZE (10 * 1024 * 1024)  // 10MB (minimum memory buffer size)
 
-#define LOCK(...) dispatch_semaphore_wait(self->_lock, DISPATCH_TIME_FOREVER); \
-__VA_ARGS__; \
-dispatch_semaphore_signal(self->_lock);
+#define LOCK(...)                                                \
+    dispatch_semaphore_wait(self->_lock, DISPATCH_TIME_FOREVER); \
+    __VA_ARGS__;                                                 \
+    dispatch_semaphore_signal(self->_lock);
 
-#define LOCK_VIEW(...) dispatch_semaphore_wait(view->_lock, DISPATCH_TIME_FOREVER); \
-__VA_ARGS__; \
-dispatch_semaphore_signal(view->_lock);
+#define LOCK_VIEW(...)                                           \
+    dispatch_semaphore_wait(view->_lock, DISPATCH_TIME_FOREVER); \
+    __VA_ARGS__;                                                 \
+    dispatch_semaphore_signal(view->_lock);
 
 
-static int64_t _YYDeviceMemoryTotal() {
+static int64_t _YYDeviceMemoryTotal()
+{
     int64_t mem = [[NSProcessInfo processInfo] physicalMemory];
-    if (mem < -1) mem = -1;
-        return mem;
+    if (mem < -1)
+        mem = -1;
+    return mem;
 }
 
-static int64_t _YYDeviceMemoryFree() {
+static int64_t _YYDeviceMemoryFree()
+{
     mach_port_t host_port = mach_host_self();
     mach_msg_type_number_t host_size = sizeof(vm_statistics_data_t) / sizeof(integer_t);
     vm_size_t page_size;
     vm_statistics_data_t vm_stat;
     kern_return_t kern;
-    
+
     kern = host_page_size(host_port, &page_size);
-    if (kern != KERN_SUCCESS) return -1;
+    if (kern != KERN_SUCCESS)
+        return -1;
     kern = host_statistics(host_port, HOST_VM_INFO, (host_info_t)&vm_stat, &host_size);
-    if (kern != KERN_SUCCESS) return -1;
+    if (kern != KERN_SUCCESS)
+        return -1;
     return vm_stat.free_count * page_size;
 }
 
@@ -57,59 +64,89 @@ static int64_t _YYDeviceMemoryFree() {
 @end
 
 @implementation _YYImageWeakProxy
-- (instancetype)initWithTarget:(id)target {
+- (instancetype)initWithTarget:(id)target
+{
     _target = target;
     return self;
 }
-+ (instancetype)proxyWithTarget:(id)target {
+
++ (instancetype)proxyWithTarget:(id)target
+{
     return [[_YYImageWeakProxy alloc] initWithTarget:target];
 }
-- (id)forwardingTargetForSelector:(SEL)selector {
+
+- (id)forwardingTargetForSelector:(SEL)selector
+{
     return _target;
 }
-- (void)forwardInvocation:(NSInvocation *)invocation {
+
+- (void)forwardInvocation:(NSInvocation *)invocation
+{
     void *null = NULL;
     [invocation setReturnValue:&null];
 }
-- (NSMethodSignature *)methodSignatureForSelector:(SEL)selector {
+
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)selector
+{
     return [NSObject instanceMethodSignatureForSelector:@selector(init)];
 }
-- (BOOL)respondsToSelector:(SEL)aSelector {
+
+- (BOOL)respondsToSelector:(SEL)aSelector
+{
     return [_target respondsToSelector:aSelector];
 }
-- (BOOL)isEqual:(id)object {
+
+- (BOOL)isEqual:(id)object
+{
     return [_target isEqual:object];
 }
-- (NSUInteger)hash {
+
+- (NSUInteger)hash
+{
     return [_target hash];
 }
-- (Class)superclass {
+
+- (Class)superclass
+{
     return [_target superclass];
 }
-- (Class)class {
+
+- (Class)class
+{
     return [_target class];
 }
-- (BOOL)isKindOfClass:(Class)aClass {
+
+- (BOOL)isKindOfClass:(Class)aClass
+{
     return [_target isKindOfClass:aClass];
 }
-- (BOOL)isMemberOfClass:(Class)aClass {
+
+- (BOOL)isMemberOfClass:(Class)aClass
+{
     return [_target isMemberOfClass:aClass];
 }
-- (BOOL)conformsToProtocol:(Protocol *)aProtocol {
+
+- (BOOL)conformsToProtocol:(Protocol *)aProtocol
+{
     return [_target conformsToProtocol:aProtocol];
 }
-- (BOOL)isProxy {
+
+- (BOOL)isProxy
+{
     return YES;
 }
-- (NSString *)description {
+
+- (NSString *)description
+{
     return [_target description];
 }
-- (NSString *)debugDescription {
+
+- (NSString *)debugDescription
+{
     return [_target debugDescription];
 }
+
 @end
-
-
 
 
 typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
@@ -120,32 +157,34 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     YYAnimatedImageTypeHighlightedImages,
 };
 
-@interface YYAnimatedImageView() {
-    @package
-    UIImage <YYAnimatedImage> *_curAnimatedImage;
-    
-    dispatch_semaphore_t _lock; ///< lock for _buffer
-    NSOperationQueue *_requestQueue; ///< image request queue, serial
-    
-    CADisplayLink *_link; ///< ticker for change frame
-    NSTimeInterval _time; ///< time after last frame
-    
-    UIImage *_curFrame; ///< current frame to display
-    NSUInteger _curIndex; ///< current frame index (from 0)
-    NSUInteger _totalFrameCount; ///< total frame count
-    
-    BOOL _loopEnd; ///< whether the loop is end.
-    NSUInteger _curLoop; ///< current loop count (from 0)
-    NSUInteger _totalLoop; ///< total loop count, 0 means infinity
-    
-    NSMutableDictionary *_buffer; ///< frame buffer
-    BOOL _bufferMiss; ///< whether miss frame on last opportunity
-    NSUInteger _maxBufferCount; ///< maximum buffer count
-    NSInteger _incrBufferCount; ///< current allowed buffer count (will increase by step)
-    
+@interface YYAnimatedImageView()
+{
+  @package
+    UIImage<YYAnimatedImage> *_curAnimatedImage;
+
+    dispatch_semaphore_t _lock;  ///< lock for _buffer
+    NSOperationQueue *_requestQueue;  ///< image request queue, serial
+
+    CADisplayLink *_link;  ///< ticker for change frame
+    NSTimeInterval _time;  ///< time after last frame
+
+    UIImage *_curFrame;  ///< current frame to display
+    NSUInteger _curIndex;  ///< current frame index (from 0)
+    NSUInteger _totalFrameCount;  ///< total frame count
+
+    BOOL _loopEnd;  ///< whether the loop is end.
+    NSUInteger _curLoop;  ///< current loop count (from 0)
+    NSUInteger _totalLoop;  ///< total loop count, 0 means infinity
+
+    NSMutableDictionary *_buffer;  ///< frame buffer
+    BOOL _bufferMiss;  ///< whether miss frame on last opportunity
+    NSUInteger _maxBufferCount;  ///< maximum buffer count
+    NSInteger _incrBufferCount;  ///< current allowed buffer count (will increase by step)
+
     CGRect _curContentsRect;
-    BOOL _curImageHasContentsRect; ///< image has implementated "animatedImageContentsRectAtIndex:"
+    BOOL _curImageHasContentsRect;  ///< image has implementated "animatedImageContentsRectAtIndex:"
 }
+
 @property (nonatomic, readwrite) BOOL currentIsPlayingAnimation;
 - (void)calcMaxBufferCount;
 @end
@@ -154,16 +193,20 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
 @interface _YYAnimatedImageViewFetchOperation : NSOperation
 @property (nonatomic, weak) YYAnimatedImageView *view;
 @property (nonatomic, assign) NSUInteger nextIndex;
-@property (nonatomic, strong) UIImage <YYAnimatedImage> *curImage;
+@property (nonatomic, strong) UIImage<YYAnimatedImage> *curImage;
 @end
 
 @implementation _YYAnimatedImageViewFetchOperation
-- (void)main {
+- (void)main
+{
     __strong YYAnimatedImageView *view = _view;
-    if (!view) return;
-    if ([self isCancelled]) return;
+    if (!view)
+        return;
+    if ([self isCancelled])
+        return;
     view->_incrBufferCount++;
-    if (view->_incrBufferCount == 0) [view calcMaxBufferCount];
+    if (view->_incrBufferCount == 0)
+        [view calcMaxBufferCount];
     if (view->_incrBufferCount > (NSInteger)view->_maxBufferCount) {
         view->_incrBufferCount = view->_maxBufferCount;
     }
@@ -171,65 +214,75 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     NSUInteger max = view->_incrBufferCount < 1 ? 1 : view->_incrBufferCount;
     NSUInteger total = view->_totalFrameCount;
     view = nil;
-    
+
     for (int i = 0; i < max; i++, idx++) {
         @autoreleasepool {
-            if (idx >= total) idx = 0;
-            if ([self isCancelled]) break;
+            if (idx >= total)
+                idx = 0;
+            if ([self isCancelled])
+                break;
             __strong YYAnimatedImageView *view = _view;
-            if (!view) break;
+            if (!view)
+                break;
             LOCK_VIEW(BOOL miss = (view->_buffer[@(idx)] == nil));
-            
+
             if (miss) {
                 UIImage *img = [_curImage animatedImageFrameAtIndex:idx];
                 img = img.yy_imageByDecoded;
-                if ([self isCancelled]) break;
+                if ([self isCancelled])
+                    break;
                 LOCK_VIEW(view->_buffer[@(idx)] = img ? img : [NSNull null]);
                 view = nil;
             }
         }
     }
 }
+
 @end
 
 @implementation YYAnimatedImageView
 
-- (instancetype)init {
+- (instancetype)init
+{
     self = [super init];
     _runloopMode = NSRunLoopCommonModes;
     _autoPlayAnimatedImage = YES;
     return self;
 }
 
-- (instancetype)initWithFrame:(CGRect)frame {
+- (instancetype)initWithFrame:(CGRect)frame
+{
     self = [super initWithFrame:frame];
     _runloopMode = NSRunLoopCommonModes;
     _autoPlayAnimatedImage = YES;
     return self;
 }
 
-- (instancetype)initWithImage:(UIImage *)image {
+- (instancetype)initWithImage:(UIImage *)image
+{
     self = [super init];
     _runloopMode = NSRunLoopCommonModes;
     _autoPlayAnimatedImage = YES;
-    self.frame = (CGRect) {CGPointZero, image.size };
+    self.frame = (CGRect){CGPointZero, image.size};
     self.image = image;
     return self;
 }
 
-- (instancetype)initWithImage:(UIImage *)image highlightedImage:(UIImage *)highlightedImage {
+- (instancetype)initWithImage:(UIImage *)image highlightedImage:(UIImage *)highlightedImage
+{
     self = [super init];
     _runloopMode = NSRunLoopCommonModes;
     _autoPlayAnimatedImage = YES;
     CGSize size = image ? image.size : highlightedImage.size;
-    self.frame = (CGRect) {CGPointZero, size };
+    self.frame = (CGRect){CGPointZero, size};
     self.image = image;
     self.highlightedImage = highlightedImage;
     return self;
 }
 
 // init the animated params.
-- (void)resetAnimated {
+- (void)resetAnimated
+{
     if (!_link) {
         _lock = dispatch_semaphore_create(1);
         _buffer = [NSMutableDictionary new];
@@ -240,23 +293,22 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
             [_link addToRunLoop:[NSRunLoop mainRunLoop] forMode:_runloopMode];
         }
         _link.paused = YES;
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveMemoryWarning:) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground:) name:UIApplicationDidEnterBackgroundNotification object:nil];
     }
-    
+
     [_requestQueue cancelAllOperations];
     LOCK(
-         if (_buffer.count) {
-             NSMutableDictionary *holder = _buffer;
-             _buffer = [NSMutableDictionary new];
-             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
-                 // Capture the dictionary to global queue,
-                 // release these images in background to avoid blocking UI thread.
-                 [holder class];
-             });
-         }
-    );
+        if (_buffer.count) {
+            NSMutableDictionary *holder = _buffer;
+            _buffer = [NSMutableDictionary new];
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+                // Capture the dictionary to global queue,
+                // release these images in background to avoid blocking UI thread.
+                [holder class];
+            });
+        });
     _link.paused = YES;
     _time = 0;
     if (_curIndex != 0) {
@@ -274,84 +326,117 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     _incrBufferCount = 0;
 }
 
-- (void)setImage:(UIImage *)image {
-    if (self.image == image) return;
+- (void)setImage:(UIImage *)image
+{
+    if (self.image == image)
+        return;
     [self setImage:image withType:YYAnimatedImageTypeImage];
 }
 
-- (void)setHighlightedImage:(UIImage *)highlightedImage {
-    if (self.highlightedImage == highlightedImage) return;
+- (void)setHighlightedImage:(UIImage *)highlightedImage
+{
+    if (self.highlightedImage == highlightedImage)
+        return;
     [self setImage:highlightedImage withType:YYAnimatedImageTypeHighlightedImage];
 }
 
-- (void)setAnimationImages:(NSArray *)animationImages {
-    if (self.animationImages == animationImages) return;
+- (void)setAnimationImages:(NSArray *)animationImages
+{
+    if (self.animationImages == animationImages)
+        return;
     [self setImage:animationImages withType:YYAnimatedImageTypeImages];
 }
 
-- (void)setHighlightedAnimationImages:(NSArray *)highlightedAnimationImages {
-    if (self.highlightedAnimationImages == highlightedAnimationImages) return;
+- (void)setHighlightedAnimationImages:(NSArray *)highlightedAnimationImages
+{
+    if (self.highlightedAnimationImages == highlightedAnimationImages)
+        return;
     [self setImage:highlightedAnimationImages withType:YYAnimatedImageTypeHighlightedImages];
 }
 
-- (void)setHighlighted:(BOOL)highlighted {
+- (void)setHighlighted:(BOOL)highlighted
+{
     [super setHighlighted:highlighted];
-    if (_link) [self resetAnimated];
+    if (_link)
+        [self resetAnimated];
     [self imageChanged];
 }
 
-- (id)imageForType:(YYAnimatedImageType)type {
+- (id)imageForType:(YYAnimatedImageType)type
+{
     switch (type) {
-        case YYAnimatedImageTypeNone: return nil;
-        case YYAnimatedImageTypeImage: return self.image;
-        case YYAnimatedImageTypeHighlightedImage: return self.highlightedImage;
-        case YYAnimatedImageTypeImages: return self.animationImages;
-        case YYAnimatedImageTypeHighlightedImages: return self.highlightedAnimationImages;
+        case YYAnimatedImageTypeNone:
+            return nil;
+        case YYAnimatedImageTypeImage:
+            return self.image;
+        case YYAnimatedImageTypeHighlightedImage:
+            return self.highlightedImage;
+        case YYAnimatedImageTypeImages:
+            return self.animationImages;
+        case YYAnimatedImageTypeHighlightedImages:
+            return self.highlightedAnimationImages;
     }
     return nil;
 }
 
-- (YYAnimatedImageType)currentImageType {
+- (YYAnimatedImageType)currentImageType
+{
     YYAnimatedImageType curType = YYAnimatedImageTypeNone;
     if (self.highlighted) {
-        if (self.highlightedAnimationImages.count) curType = YYAnimatedImageTypeHighlightedImages;
-        else if (self.highlightedImage) curType = YYAnimatedImageTypeHighlightedImage;
+        if (self.highlightedAnimationImages.count)
+            curType = YYAnimatedImageTypeHighlightedImages;
+        else if (self.highlightedImage)
+            curType = YYAnimatedImageTypeHighlightedImage;
     }
     if (curType == YYAnimatedImageTypeNone) {
-        if (self.animationImages.count) curType = YYAnimatedImageTypeImages;
-        else if (self.image) curType = YYAnimatedImageTypeImage;
+        if (self.animationImages.count)
+            curType = YYAnimatedImageTypeImages;
+        else if (self.image)
+            curType = YYAnimatedImageTypeImage;
     }
     return curType;
 }
 
-- (void)setImage:(id)image withType:(YYAnimatedImageType)type {
+- (void)setImage:(id)image withType:(YYAnimatedImageType)type
+{
     [self stopAnimating];
-    if (_link) [self resetAnimated];
+    if (_link)
+        [self resetAnimated];
     _curFrame = nil;
     switch (type) {
-        case YYAnimatedImageTypeNone: break;
-        case YYAnimatedImageTypeImage: super.image = image; break;
-        case YYAnimatedImageTypeHighlightedImage: super.highlightedImage = image; break;
-        case YYAnimatedImageTypeImages: super.animationImages = image; break;
-        case YYAnimatedImageTypeHighlightedImages: super.highlightedAnimationImages = image; break;
+        case YYAnimatedImageTypeNone:
+            break;
+        case YYAnimatedImageTypeImage:
+            super.image = image;
+            break;
+        case YYAnimatedImageTypeHighlightedImage:
+            super.highlightedImage = image;
+            break;
+        case YYAnimatedImageTypeImages:
+            super.animationImages = image;
+            break;
+        case YYAnimatedImageTypeHighlightedImages:
+            super.highlightedAnimationImages = image;
+            break;
     }
     [self imageChanged];
 }
 
-- (void)imageChanged {
+- (void)imageChanged
+{
     YYAnimatedImageType newType = [self currentImageType];
     id newVisibleImage = [self imageForType:newType];
     NSUInteger newImageFrameCount = 0;
     BOOL hasContentsRect = NO;
     if ([newVisibleImage isKindOfClass:[UIImage class]] &&
         [newVisibleImage conformsToProtocol:@protocol(YYAnimatedImage)]) {
-        newImageFrameCount = ((UIImage<YYAnimatedImage> *) newVisibleImage).animatedImageFrameCount;
+        newImageFrameCount = ((UIImage<YYAnimatedImage> *)newVisibleImage).animatedImageFrameCount;
         if (newImageFrameCount > 1) {
-            hasContentsRect = [((UIImage<YYAnimatedImage> *) newVisibleImage) respondsToSelector:@selector(animatedImageContentsRectAtIndex:)];
+            hasContentsRect = [((UIImage<YYAnimatedImage> *)newVisibleImage) respondsToSelector:@selector(animatedImageContentsRectAtIndex:)];
         }
     }
     if (!hasContentsRect && _curImageHasContentsRect) {
-        if (!CGRectEqualToRect(self.layer.contentsRect, CGRectMake(0, 0, 1, 1)) ) {
+        if (!CGRectEqualToRect(self.layer.contentsRect, CGRectMake(0, 0, 1, 1))) {
             [CATransaction begin];
             [CATransaction setDisableActions:YES];
             self.layer.contentsRect = CGRectMake(0, 0, 1, 1);
@@ -360,10 +445,10 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     }
     _curImageHasContentsRect = hasContentsRect;
     if (hasContentsRect) {
-        CGRect rect = [((UIImage<YYAnimatedImage> *) newVisibleImage) animatedImageContentsRectAtIndex:0];
+        CGRect rect = [((UIImage<YYAnimatedImage> *)newVisibleImage) animatedImageContentsRectAtIndex:0];
         [self setContentsRect:rect forImage:newVisibleImage];
     }
-    
+
     if (newImageFrameCount > 1) {
         [self resetAnimated];
         _curAnimatedImage = newVisibleImage;
@@ -377,40 +462,49 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
 }
 
 // dynamically adjust buffer size for current memory.
-- (void)calcMaxBufferCount {
+- (void)calcMaxBufferCount
+{
     int64_t bytes = (int64_t)_curAnimatedImage.animatedImageBytesPerFrame;
-    if (bytes == 0) bytes = 1024;
-    
+    if (bytes == 0)
+        bytes = 1024;
+
     int64_t total = _YYDeviceMemoryTotal();
     int64_t free = _YYDeviceMemoryFree();
     int64_t max = MIN(total * 0.2, free * 0.6);
     max = MAX(max, BUFFER_SIZE);
-    if (_maxBufferSize) max = max > _maxBufferSize ? _maxBufferSize : max;
+    if (_maxBufferSize)
+        max = max > _maxBufferSize ? _maxBufferSize : max;
     double maxBufferCount = (double)max / (double)bytes;
-    if (maxBufferCount < 1) maxBufferCount = 1;
-    else if (maxBufferCount > 512) maxBufferCount = 512;
+    if (maxBufferCount < 1)
+        maxBufferCount = 1;
+    else if (maxBufferCount > 512)
+        maxBufferCount = 512;
     _maxBufferCount = maxBufferCount;
 }
 
-- (void)dealloc {
+- (void)dealloc
+{
     [_requestQueue cancelAllOperations];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidEnterBackgroundNotification object:nil];
     [_link invalidate];
 }
 
-- (BOOL)isAnimating {
+- (BOOL)isAnimating
+{
     return self.currentIsPlayingAnimation;
 }
 
-- (void)stopAnimating {
+- (void)stopAnimating
+{
     [super stopAnimating];
     [_requestQueue cancelAllOperations];
     _link.paused = YES;
     self.currentIsPlayingAnimation = NO;
 }
 
-- (void)startAnimating {
+- (void)startAnimating
+{
     YYAnimatedImageType type = [self currentImageType];
     if (type == YYAnimatedImageTypeImages || type == YYAnimatedImageTypeHighlightedImages) {
         NSArray *images = [self imageForType:type];
@@ -428,95 +522,98 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     }
 }
 
-- (void)didReceiveMemoryWarning:(NSNotification *)notification {
+- (void)didReceiveMemoryWarning:(NSNotification *)notification
+{
     [_requestQueue cancelAllOperations];
-    [_requestQueue addOperationWithBlock: ^{
-        _incrBufferCount = -60 - (int)(arc4random() % 120); // about 1~3 seconds to grow back..
+    [_requestQueue addOperationWithBlock:^{
+        _incrBufferCount = -60 - (int)(arc4random() % 120);  // about 1~3 seconds to grow back..
         NSNumber *next = @((_curIndex + 1) % _totalFrameCount);
         LOCK(
-             NSArray * keys = _buffer.allKeys;
-             for (NSNumber * key in keys) {
-                 if (![key isEqualToNumber:next]) { // keep the next frame for smoothly animation
-                     [_buffer removeObjectForKey:key];
-                 }
-             }
-        )//LOCK
+            NSArray *keys = _buffer.allKeys;
+            for (NSNumber *key in keys) {
+                if (![key isEqualToNumber:next]) {  // keep the next frame for smoothly animation
+                    [_buffer removeObjectForKey:key];
+                }
+            })  //LOCK
     }];
 }
 
-- (void)didEnterBackground:(NSNotification *)notification {
+- (void)didEnterBackground:(NSNotification *)notification
+{
     [_requestQueue cancelAllOperations];
     NSNumber *next = @((_curIndex + 1) % _totalFrameCount);
     LOCK(
-         NSArray * keys = _buffer.allKeys;
-         for (NSNumber * key in keys) {
-             if (![key isEqualToNumber:next]) { // keep the next frame for smoothly animation
-                 [_buffer removeObjectForKey:key];
-             }
-         }
-     )//LOCK
+        NSArray *keys = _buffer.allKeys;
+        for (NSNumber *key in keys) {
+            if (![key isEqualToNumber:next]) {  // keep the next frame for smoothly animation
+                [_buffer removeObjectForKey:key];
+            }
+        })  //LOCK
 }
 
-- (void)step:(CADisplayLink *)link {
-    UIImage <YYAnimatedImage> *image = _curAnimatedImage;
+- (void)step:(CADisplayLink *)link
+{
+    UIImage<YYAnimatedImage> *image = _curAnimatedImage;
     NSMutableDictionary *buffer = _buffer;
     UIImage *bufferedImage = nil;
     NSUInteger nextIndex = (_curIndex + 1) % _totalFrameCount;
     BOOL bufferIsFull = NO;
-    
-    if (!image) return;
-    if (_loopEnd) { // view will keep in last frame
+
+    if (!image)
+        return;
+    if (_loopEnd) {  // view will keep in last frame
         [self stopAnimating];
         return;
     }
-    
+
     NSTimeInterval delay = 0;
     if (!_bufferMiss) {
         _time += link.duration;
         delay = [image animatedImageDurationAtIndex:_curIndex];
-        if (_time < delay) return;
+        if (_time < delay)
+            return;
         _time -= delay;
         if (nextIndex == 0) {
             _curLoop++;
             if (_curLoop >= _totalLoop && _totalLoop != 0) {
                 _loopEnd = YES;
                 [self stopAnimating];
-                [self.layer setNeedsDisplay]; // let system call `displayLayer:` before runloop sleep
-                return; // stop at last frame
+                [self.layer setNeedsDisplay];  // let system call `displayLayer:` before runloop sleep
+                return;  // stop at last frame
             }
         }
         delay = [image animatedImageDurationAtIndex:nextIndex];
-        if (_time > delay) _time = delay; // do not jump over frame
+        if (_time > delay)
+            _time = delay;  // do not jump over frame
     }
     LOCK(
-         bufferedImage = buffer[@(nextIndex)];
-         if (bufferedImage) {
-             if ((int)_incrBufferCount < _totalFrameCount) {
-                 [buffer removeObjectForKey:@(nextIndex)];
-             }
-             [self willChangeValueForKey:@"currentAnimatedImageIndex"];
-             _curIndex = nextIndex;
-             [self didChangeValueForKey:@"currentAnimatedImageIndex"];
-             _curFrame = bufferedImage == (id)[NSNull null] ? nil : bufferedImage;
-             if (_curImageHasContentsRect) {
-                 _curContentsRect = [image animatedImageContentsRectAtIndex:_curIndex];
-                 [self setContentsRect:_curContentsRect forImage:_curFrame];
-             }
-             nextIndex = (_curIndex + 1) % _totalFrameCount;
-             _bufferMiss = NO;
-             if (buffer.count == _totalFrameCount) {
-                 bufferIsFull = YES;
-             }
-         } else {
-             _bufferMiss = YES;
-         }
-    )//LOCK
-    
+        bufferedImage = buffer[@(nextIndex)];
+        if (bufferedImage) {
+            if ((int)_incrBufferCount < _totalFrameCount) {
+                [buffer removeObjectForKey:@(nextIndex)];
+            }
+            [self willChangeValueForKey:@"currentAnimatedImageIndex"];
+            _curIndex = nextIndex;
+            [self didChangeValueForKey:@"currentAnimatedImageIndex"];
+            _curFrame = bufferedImage == (id)[NSNull null] ? nil : bufferedImage;
+            if (_curImageHasContentsRect) {
+                _curContentsRect = [image animatedImageContentsRectAtIndex:_curIndex];
+                [self setContentsRect:_curContentsRect forImage:_curFrame];
+            }
+            nextIndex = (_curIndex + 1) % _totalFrameCount;
+            _bufferMiss = NO;
+            if (buffer.count == _totalFrameCount) {
+                bufferIsFull = YES;
+            }
+        } else {
+            _bufferMiss = YES;
+        })  //LOCK
+
     if (!_bufferMiss) {
-        [self.layer setNeedsDisplay]; // let system call `displayLayer:` before runloop sleep
+        [self.layer setNeedsDisplay];  // let system call `displayLayer:` before runloop sleep
     }
-    
-    if (!bufferIsFull && _requestQueue.operationCount == 0) { // if some work not finished, wait for next opportunity
+
+    if (!bufferIsFull && _requestQueue.operationCount == 0) {  // if some work not finished, wait for next opportunity
         _YYAnimatedImageViewFetchOperation *operation = [_YYAnimatedImageViewFetchOperation new];
         operation.view = self;
         operation.nextIndex = nextIndex;
@@ -525,16 +622,19 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     }
 }
 
-- (void)displayLayer:(CALayer *)layer {
+- (void)displayLayer:(CALayer *)layer
+{
     if (_curFrame) {
         layer.contents = (__bridge id)_curFrame.CGImage;
-    }else {
+    } else {
         // If we have no animation frames, call super implementation. iOS 14+ UIImageView use this delegate method for rendering.
-        if ([UIImageView instancesRespondToSelector:@selector(displayLayer:)]) [super displayLayer:layer];
+        if ([UIImageView instancesRespondToSelector:@selector(displayLayer:)])
+            [super displayLayer:layer];
     }
 }
 
-- (void)setContentsRect:(CGRect)rect forImage:(UIImage *)image{
+- (void)setContentsRect:(CGRect)rect forImage:(UIImage *)image
+{
     CGRect layerRect = CGRectMake(0, 0, 1, 1);
     if (image) {
         CGSize imageSize = image.size;
@@ -555,9 +655,10 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     [CATransaction commit];
 }
 
-- (void)didMoved {
+- (void)didMoved
+{
     if (self.autoPlayAnimatedImage) {
-        if(self.superview && self.window) {
+        if (self.superview && self.window) {
             [self startAnimating];
         } else {
             [self stopAnimating];
@@ -565,39 +666,43 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     }
 }
 
-- (void)didMoveToWindow {
+- (void)didMoveToWindow
+{
     [super didMoveToWindow];
     [self didMoved];
 }
 
-- (void)didMoveToSuperview {
+- (void)didMoveToSuperview
+{
     [super didMoveToSuperview];
     [self didMoved];
 }
 
-- (void)setCurrentAnimatedImageIndex:(NSUInteger)currentAnimatedImageIndex {
-    if (!_curAnimatedImage) return;
-    if (currentAnimatedImageIndex >= _curAnimatedImage.animatedImageFrameCount) return;
-    if (_curIndex == currentAnimatedImageIndex) return;
-    
+- (void)setCurrentAnimatedImageIndex:(NSUInteger)currentAnimatedImageIndex
+{
+    if (!_curAnimatedImage)
+        return;
+    if (currentAnimatedImageIndex >= _curAnimatedImage.animatedImageFrameCount)
+        return;
+    if (_curIndex == currentAnimatedImageIndex)
+        return;
+
     void (^block)() = ^{
         LOCK(
-             [_requestQueue cancelAllOperations];
-             [_buffer removeAllObjects];
-             [self willChangeValueForKey:@"currentAnimatedImageIndex"];
-             _curIndex = currentAnimatedImageIndex;
-             [self didChangeValueForKey:@"currentAnimatedImageIndex"];
-             _curFrame = [_curAnimatedImage animatedImageFrameAtIndex:_curIndex];
-             if (_curImageHasContentsRect) {
-                 _curContentsRect = [_curAnimatedImage animatedImageContentsRectAtIndex:_curIndex];
-             }
-             _time = 0;
-             _loopEnd = NO;
-             _bufferMiss = NO;
-             [self.layer setNeedsDisplay];
-        )//LOCK
+            [_requestQueue cancelAllOperations];
+                [_buffer removeAllObjects];
+            [self willChangeValueForKey:@"currentAnimatedImageIndex"];
+            _curIndex = currentAnimatedImageIndex;
+            [self didChangeValueForKey:@"currentAnimatedImageIndex"];
+            _curFrame = [_curAnimatedImage animatedImageFrameAtIndex:_curIndex];
+            if (_curImageHasContentsRect) {
+                _curContentsRect = [_curAnimatedImage animatedImageContentsRectAtIndex:_curIndex];
+            } _time = 0;
+            _loopEnd = NO;
+            _bufferMiss = NO;
+                [self.layer setNeedsDisplay];)  //LOCK
     };
-    
+
     if (pthread_main_np()) {
         block();
     } else {
@@ -605,12 +710,15 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     }
 }
 
-- (NSUInteger)currentAnimatedImageIndex {
+- (NSUInteger)currentAnimatedImageIndex
+{
     return _curIndex;
 }
 
-- (void)setRunloopMode:(NSString *)runloopMode {
-    if ([_runloopMode isEqual:runloopMode]) return;
+- (void)setRunloopMode:(NSString *)runloopMode
+{
+    if ([_runloopMode isEqual:runloopMode])
+        return;
     if (_link) {
         if (_runloopMode) {
             [_link removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:_runloopMode];
@@ -624,7 +732,8 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
 
 #pragma mark - Override NSObject(NSKeyValueObservingCustomization)
 
-+ (BOOL)automaticallyNotifiesObserversForKey:(NSString *)key {
++ (BOOL)automaticallyNotifiesObserversForKey:(NSString *)key
+{
     if ([key isEqualToString:@"currentAnimatedImageIndex"]) {
         return NO;
     }
@@ -633,16 +742,18 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
 
 #pragma mark - NSCoding
 
-- (instancetype)initWithCoder:(NSCoder *)aDecoder {
+- (instancetype)initWithCoder:(NSCoder *)aDecoder
+{
     self = [super initWithCoder:aDecoder];
     _runloopMode = [aDecoder decodeObjectForKey:@"runloopMode"];
-    if (_runloopMode.length == 0) _runloopMode = NSRunLoopCommonModes;
+    if (_runloopMode.length == 0)
+        _runloopMode = NSRunLoopCommonModes;
     if ([aDecoder containsValueForKey:@"autoPlayAnimatedImage"]) {
         _autoPlayAnimatedImage = [aDecoder decodeBoolForKey:@"autoPlayAnimatedImage"];
     } else {
         _autoPlayAnimatedImage = YES;
     }
-    
+
     UIImage *image = [aDecoder decodeObjectForKey:@"YYAnimatedImage"];
     UIImage *highlightedImage = [aDecoder decodeObjectForKey:@"YYHighlightedAnimatedImage"];
     if (image) {
@@ -656,19 +767,22 @@ typedef NS_ENUM(NSUInteger, YYAnimatedImageType) {
     return self;
 }
 
-- (void)encodeWithCoder:(NSCoder *)aCoder {
+- (void)encodeWithCoder:(NSCoder *)aCoder
+{
     [super encodeWithCoder:aCoder];
     [aCoder encodeObject:_runloopMode forKey:@"runloopMode"];
     [aCoder encodeBool:_autoPlayAnimatedImage forKey:@"autoPlayAnimatedImage"];
-    
+
     BOOL ani, multi;
     ani = [self.image conformsToProtocol:@protocol(YYAnimatedImage)];
-    multi = (ani && ((UIImage <YYAnimatedImage> *)self.image).animatedImageFrameCount > 1);
-    if (multi) [aCoder encodeObject:self.image forKey:@"YYAnimatedImage"];
-    
+    multi = (ani && ((UIImage<YYAnimatedImage> *)self.image).animatedImageFrameCount > 1);
+    if (multi)
+        [aCoder encodeObject:self.image forKey:@"YYAnimatedImage"];
+
     ani = [self.highlightedImage conformsToProtocol:@protocol(YYAnimatedImage)];
-    multi = (ani && ((UIImage <YYAnimatedImage> *)self.highlightedImage).animatedImageFrameCount > 1);
-    if (multi) [aCoder encodeObject:self.highlightedImage forKey:@"YYHighlightedAnimatedImage"];
+    multi = (ani && ((UIImage<YYAnimatedImage> *)self.highlightedImage).animatedImageFrameCount > 1);
+    if (multi)
+        [aCoder encodeObject:self.highlightedImage forKey:@"YYHighlightedAnimatedImage"];
 }
 
 @end

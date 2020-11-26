@@ -14,7 +14,7 @@
 /**
  Provides extensions for `UIControl`.
  */
-@interface UIControl (YYAdd)
+@interface UIControl(YYAdd)
 
 /**
  Removes all targets and actions for a particular event (or events)

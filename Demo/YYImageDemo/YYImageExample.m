@@ -19,7 +19,8 @@
 
 @implementation YYImageExample
 
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
     self.title = @"YYImage Demo";
     [super viewDidLoad];
     self.titles = @[].mutableCopy;
@@ -31,18 +32,21 @@
     [self.tableView reloadData];
 }
 
-- (void)addCell:(NSString *)title class:(NSString *)className {
+- (void)addCell:(NSString *)title class:(NSString *)className
+{
     [self.titles addObject:title];
     [self.classNames addObject:className];
 }
 
 #pragma mark - Table view data source
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
     return _titles.count;
 }
 
-- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
+{
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"YY"];
     if (!cell) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"YY"];
@@ -51,7 +55,8 @@
     return cell;
 }
 
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
     NSString *className = self.classNames[indexPath.row];
     Class class = NSClassFromString(className);
     if (class) {

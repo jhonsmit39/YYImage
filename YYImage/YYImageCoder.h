@@ -17,17 +17,17 @@ NS_ASSUME_NONNULL_BEGIN
  Image file type.
  */
 typedef NS_ENUM(NSUInteger, YYImageType) {
-    YYImageTypeUnknown = 0, ///< unknown
-    YYImageTypeJPEG,        ///< jpeg, jpg
-    YYImageTypeJPEG2000,    ///< jp2
-    YYImageTypeTIFF,        ///< tiff, tif
-    YYImageTypeBMP,         ///< bmp
-    YYImageTypeICO,         ///< ico
-    YYImageTypeICNS,        ///< icns
-    YYImageTypeGIF,         ///< gif
-    YYImageTypePNG,         ///< png
-    YYImageTypeWebP,        ///< webp
-    YYImageTypeOther,       ///< other image format
+    YYImageTypeUnknown = 0,  ///< unknown
+    YYImageTypeJPEG,  ///< jpeg, jpg
+    YYImageTypeJPEG2000,  ///< jp2
+    YYImageTypeTIFF,  ///< tiff, tif
+    YYImageTypeBMP,  ///< bmp
+    YYImageTypeICO,  ///< ico
+    YYImageTypeICNS,  ///< icns
+    YYImageTypeGIF,  ///< gif
+    YYImageTypePNG,  ///< png
+    YYImageTypeWebP,  ///< webp
+    YYImageTypeOther,  ///< other image format
 };
 
 
@@ -36,19 +36,19 @@ typedef NS_ENUM(NSUInteger, YYImageType) {
  before rendering the next frame on the canvas.
  */
 typedef NS_ENUM(NSUInteger, YYImageDisposeMethod) {
-    
+
     /**
      No disposal is done on this frame before rendering the next; the contents
      of the canvas are left as is.
      */
     YYImageDisposeNone = 0,
-    
+
     /**
      The frame's region of the canvas is to be cleared to fully transparent black
      before rendering the next frame.
      */
     YYImageDisposeBackground,
-    
+
     /**
      The frame's region of the canvas is to be reverted to the previous contents
      before rendering the next frame.
@@ -61,13 +61,13 @@ typedef NS_ENUM(NSUInteger, YYImageDisposeMethod) {
  blended with those of the previous canvas.
  */
 typedef NS_ENUM(NSUInteger, YYImageBlendOperation) {
-    
+
     /**
      All color components of the frame, including alpha, overwrite the current
      contents of the frame's canvas region.
      */
     YYImageBlendNone = 0,
-    
+
     /**
      The frame should be composited onto the output buffer based on its alpha.
      */
@@ -78,15 +78,15 @@ typedef NS_ENUM(NSUInteger, YYImageBlendOperation) {
  An image frame object.
  */
 @interface YYImageFrame : NSObject <NSCopying>
-@property (nonatomic) NSUInteger index;    ///< Frame index (zero based)
-@property (nonatomic) NSUInteger width;    ///< Frame width
-@property (nonatomic) NSUInteger height;   ///< Frame height
+@property (nonatomic) NSUInteger index;  ///< Frame index (zero based)
+@property (nonatomic) NSUInteger width;  ///< Frame width
+@property (nonatomic) NSUInteger height;  ///< Frame height
 @property (nonatomic) NSUInteger offsetX;  ///< Frame origin.x in canvas (left-bottom based)
 @property (nonatomic) NSUInteger offsetY;  ///< Frame origin.y in canvas (left-bottom based)
-@property (nonatomic) NSTimeInterval duration;          ///< Frame duration in seconds
-@property (nonatomic) YYImageDisposeMethod dispose;     ///< Frame dispose method.
-@property (nonatomic) YYImageBlendOperation blend;      ///< Frame blend operation.
-@property (nullable, nonatomic, strong) UIImage *image; ///< The image.
+@property (nonatomic) NSTimeInterval duration;  ///< Frame duration in seconds
+@property (nonatomic) YYImageDisposeMethod dispose;  ///< Frame dispose method.
+@property (nonatomic) YYImageBlendOperation blend;  ///< Frame blend operation.
+@property (nullable, nonatomic, strong) UIImage *image;  ///< The image.
 + (instancetype)frameWithImage:(UIImage *)image;
 @end
 
@@ -126,13 +126,13 @@ typedef NS_ENUM(NSUInteger, YYImageBlendOperation) {
  */
 @interface YYImageDecoder : NSObject
 
-@property (nullable, nonatomic, readonly) NSData *data;    ///< Image data.
-@property (nonatomic, readonly) YYImageType type;          ///< Image data type.
-@property (nonatomic, readonly) CGFloat scale;             ///< Image scale.
-@property (nonatomic, readonly) NSUInteger frameCount;     ///< Image frame count.
-@property (nonatomic, readonly) NSUInteger loopCount;      ///< Image loop count, 0 means infinite.
-@property (nonatomic, readonly) NSUInteger width;          ///< Image canvas width.
-@property (nonatomic, readonly) NSUInteger height;         ///< Image canvas height.
+@property (nullable, nonatomic, readonly) NSData *data;  ///< Image data.
+@property (nonatomic, readonly) YYImageType type;  ///< Image data type.
+@property (nonatomic, readonly) CGFloat scale;  ///< Image scale.
+@property (nonatomic, readonly) NSUInteger frameCount;  ///< Image frame count.
+@property (nonatomic, readonly) NSUInteger loopCount;  ///< Image loop count, 0 means infinite.
+@property (nonatomic, readonly) NSUInteger width;  ///< Image canvas width.
+@property (nonatomic, readonly) NSUInteger height;  ///< Image canvas height.
 @property (nonatomic, readonly, getter=isFinalized) BOOL finalized;
 
 /**
@@ -204,7 +204,6 @@ typedef NS_ENUM(NSUInteger, YYImageBlendOperation) {
 @end
 
 
-
 #pragma mark - Encoder
 
 /**
@@ -233,10 +232,10 @@ typedef NS_ENUM(NSUInteger, YYImageBlendOperation) {
  */
 @interface YYImageEncoder : NSObject
 
-@property (nonatomic, readonly) YYImageType type; ///< Image type.
-@property (nonatomic) NSUInteger loopCount;       ///< Loop count, 0 means infinit, only available for GIF/APNG/WebP.
-@property (nonatomic) BOOL lossless;              ///< Lossless, only available for WebP.
-@property (nonatomic) CGFloat quality;            ///< Compress quality, 0.0~1.0, only available for JPG/JP2/WebP.
+@property (nonatomic, readonly) YYImageType type;  ///< Image type.
+@property (nonatomic) NSUInteger loopCount;  ///< Loop count, 0 means infinit, only available for GIF/APNG/WebP.
+@property (nonatomic) BOOL lossless;  ///< Lossless, only available for WebP.
+@property (nonatomic) CGFloat quality;  ///< Compress quality, 0.0~1.0, only available for JPG/JP2/WebP.
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
 + (instancetype)new UNAVAILABLE_ATTRIBUTE;
@@ -305,7 +304,7 @@ typedef NS_ENUM(NSUInteger, YYImageBlendOperation) {
 
 #pragma mark - UIImage
 
-@interface UIImage (YYImageCoder)
+@interface UIImage(YYImageCoder)
 
 /**
  Decompress this image to bitmap, so when the image is displayed on screen, 
@@ -334,7 +333,7 @@ typedef NS_ENUM(NSUInteger, YYImageBlendOperation) {
     assetURL: An URL that identifies the saved image file. If the image is not saved, assetURL is nil.
     error: If the image is not saved, an error object that describes the reason for failure, otherwise nil.
  */
-- (void)yy_saveToAlbumWithCompletionBlock:(nullable void(^)(NSURL * _Nullable assetURL, NSError * _Nullable error))completionBlock;
+- (void)yy_saveToAlbumWithCompletionBlock:(nullable void (^)(NSURL *_Nullable assetURL, NSError *_Nullable error))completionBlock;
 
 /**
  Return a 'best' data representation for this image.
@@ -348,7 +347,6 @@ typedef NS_ENUM(NSUInteger, YYImageBlendOperation) {
 - (nullable NSData *)yy_imageDataRepresentation;
 
 @end
-
 
 
 #pragma mark - Helper
@@ -366,7 +364,6 @@ CG_EXTERN YYImageType YYImageTypeFromUTType(CFStringRef uti);
 CG_EXTERN NSString *_Nullable YYImageTypeGetExtension(YYImageType type);
 
 
-
 /// Returns the shared DeviceRGB color space.
 CG_EXTERN CGColorSpaceRef YYCGColorSpaceGetDeviceRGB();
 
@@ -380,13 +377,11 @@ CG_EXTERN BOOL YYCGColorSpaceIsDeviceRGB(CGColorSpaceRef space);
 CG_EXTERN BOOL YYCGColorSpaceIsDeviceGray(CGColorSpaceRef space);
 
 
-
 /// Convert EXIF orientation value to UIImageOrientation.
 CG_EXTERN UIImageOrientation YYUIImageOrientationFromEXIFValue(NSInteger value);
 
 /// Convert UIImageOrientation to EXIF orientation value.
 CG_EXTERN NSInteger YYUIImageOrientationToEXIFValue(UIImageOrientation orientation);
-
 
 
 /**
@@ -478,11 +473,11 @@ CG_EXTERN CGImageRef _Nullable YYCGImageCreateWithWebPData(CFDataRef webpData,
 
 typedef NS_ENUM(NSUInteger, YYImagePreset) {
     YYImagePresetDefault = 0,  ///< default preset.
-    YYImagePresetPicture,      ///< digital picture, like portrait, inner shot
-    YYImagePresetPhoto,        ///< outdoor photograph, with natural lighting
-    YYImagePresetDrawing,      ///< hand or line drawing, with high-contrast details
-    YYImagePresetIcon,         ///< small-sized colorful images
-    YYImagePresetText          ///< text-like
+    YYImagePresetPicture,  ///< digital picture, like portrait, inner shot
+    YYImagePresetPhoto,  ///< outdoor photograph, with natural lighting
+    YYImagePresetDrawing,  ///< hand or line drawing, with high-contrast details
+    YYImagePresetIcon,  ///< small-sized colorful images
+    YYImagePresetText  ///< text-like
 };
 
 /**

@@ -83,7 +83,6 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 
-
 /**
  The YYAnimatedImage protocol declares the required methods for animated image
  display with YYAnimatedImageView.

@@ -18,4 +18,3 @@
 + (void)addPanControlToAnimatedImageView:(YYAnimatedImageView *)view;
 
 @end
-

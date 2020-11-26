@@ -14,7 +14,7 @@
 /**
  Provides extensions for `UIGestureRecognizer`.
  */
-@interface UIGestureRecognizer (YYAdd)
+@interface UIGestureRecognizer(YYAdd)
 
 /**
  Initializes an allocated gesture-recognizer object with a action block.

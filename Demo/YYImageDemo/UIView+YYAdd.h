@@ -14,7 +14,7 @@
 /**
  Provides extensions for `UIView`.
  */
-@interface UIView (YYAdd)
+@interface UIView(YYAdd)
 
 /**
  Shortcut to set the view.layer's shadow
@@ -23,7 +23,7 @@
  @param offset Shadow offset
  @param radius Shadow radius
  */
-- (void)setLayerShadow:(UIColor*)color offset:(CGSize)offset radius:(CGFloat)radius;
+- (void)setLayerShadow:(UIColor *)color offset:(CGSize)offset radius:(CGFloat)radius;
 
 /**
  Remove all subviews.
@@ -37,15 +37,15 @@
  */
 @property (nonatomic, readonly) UIViewController *viewController;
 
-@property (nonatomic) CGFloat left;        ///< Shortcut for frame.origin.x.
-@property (nonatomic) CGFloat top;         ///< Shortcut for frame.origin.y
-@property (nonatomic) CGFloat right;       ///< Shortcut for frame.origin.x + frame.size.width
-@property (nonatomic) CGFloat bottom;      ///< Shortcut for frame.origin.y + frame.size.height
-@property (nonatomic) CGFloat width;       ///< Shortcut for frame.size.width.
-@property (nonatomic) CGFloat height;      ///< Shortcut for frame.size.height.
-@property (nonatomic) CGFloat centerX;     ///< Shortcut for center.x
-@property (nonatomic) CGFloat centerY;     ///< Shortcut for center.y
-@property (nonatomic) CGPoint origin;      ///< Shortcut for frame.origin.
-@property (nonatomic) CGSize  size;        ///< Shortcut for frame.size.
+@property (nonatomic) CGFloat left;  ///< Shortcut for frame.origin.x.
+@property (nonatomic) CGFloat top;  ///< Shortcut for frame.origin.y
+@property (nonatomic) CGFloat right;  ///< Shortcut for frame.origin.x + frame.size.width
+@property (nonatomic) CGFloat bottom;  ///< Shortcut for frame.origin.y + frame.size.height
+@property (nonatomic) CGFloat width;  ///< Shortcut for frame.size.width.
+@property (nonatomic) CGFloat height;  ///< Shortcut for frame.size.height.
+@property (nonatomic) CGFloat centerX;  ///< Shortcut for center.x
+@property (nonatomic) CGFloat centerY;  ///< Shortcut for center.y
+@property (nonatomic) CGPoint origin;  ///< Shortcut for frame.origin.
+@property (nonatomic) CGSize size;  ///< Shortcut for frame.size.
 
 @end
